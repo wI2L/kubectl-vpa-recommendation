@@ -1,0 +1,48 @@
+project_name: kubectl-commitment
+release:
+  prerelease: auto
+  draft: true
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+builds:
+  - binary: kubectl-commitment
+    main: ./cmd/kubectl-commitment
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/wI2L/kubectl-commitment/internal/version.buildDate={{ .Date }}
+      - -X github.com/wI2L/kubectl-commitment/internal/version.gitCommit={{ .FullCommit }}
+      - -X github.com/wI2L/kubectl-commitment/internal/version.gitVersion={{ .Version }}
+      - -X github.com/wI2L/kubectl-commitment/internal/version.gitTreeState={{ .Env.GIT_TREE_STATE }}
+      - -X github.com/wI2L/kubectl-commitment/internal/version.gitVersionMajor={{ .Major }}
+      - -X github.com/wI2L/kubectl-commitment/internal/version.gitVersionMinor={{ .Minor }}
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    files:
+      - README.md
+      - LICENSE
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-snapshot"
+changelog:
+  use: github

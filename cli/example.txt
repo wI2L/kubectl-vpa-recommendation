@@ -1,0 +1,8 @@
+# Compare all VPA recommendations in the current namespace, sorted by name
+%[1]s --sort-columns=name
+
+# Compare recommendations for the VPA foo in namespace bar
+%[1]s -n bar foo
+
+# Compare VPA recommendations in all namespaces, while showing the namespace column
+%[1]s -A --show-namespace
