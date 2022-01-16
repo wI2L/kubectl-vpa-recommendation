@@ -47,7 +47,7 @@ The following examples were produced from a brand-new Kubernetes cluster created
 
 ### Options
 
-Apart from the flags defined by the [`genericclioptions`](https://k8s.io/cli-runtime/pkg/genericclioptions) package and some [logging flags](https://github.com/kubernetes/enhancements/tree/master/keps/sig-instrumentation/2845-deprecate-klog-specific-flags-in-k8s-components), the following options are available with the plugin:
+Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s.io/cli-runtime/pkg/genericclioptions) package and some [logging flags](https://github.com/kubernetes/enhancements/tree/master/keps/sig-instrumentation/2845-deprecate-klog-specific-flags-in-k8s-components), the following options are available with the plugin:
 - `--all-namespaces`, `-A`: List `VerticalPodAutoscaler` resources in all namespaces
 - `--namespace`, `-n`: If present, the namespace scope for the request
 - `--no-colors`: Do not use colors to highlight increase/decrease percentage values
