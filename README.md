@@ -9,7 +9,7 @@
 
 A `kubectl` plugin to show the difference between the recommendations of a `VerticalPodAutoscaler` and the actual resources requests of the targeted controller's pod(s).
 
-The plugin is compatible with Kubernetes servers starting from version 1.16, which have the `autoscaling.k8s.io/v1` API group installed. See the other [pre-requisites](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler#prerequisites) for using VPAs on your cluster.
+The plugin is compatible with Kubernetes servers starting from version 1.16, which have the `autoscaling.k8s.io/v1` API group installed. See the other [prerequisites](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler#prerequisites) for using VPAs on your cluster.
 
 ## Installation
 
@@ -55,8 +55,8 @@ Apart from the flags defined by the [`genericclioptions`](https://k8s.io/cli-run
 - `--output`, `-o`: Output format. Empty string or `wide`
 - `--show-containers`, `-c`: Display containers recommendations for each `VerticalPodAutoscaler` resource
 - `--show-kind`, `-k`: Show the resource type for the requested object(s) and their target
-- `--show-namespace`: Show namespace as the first column
-- `--sort-columns`: Comma-separated List of column names for sorting the table. Default to `namespace,name`
+- `--show-namespace`: Show resource namespace as the first column
+- `--sort-columns`: Comma-separated list of column names for sorting the table. Default to `namespace,name`
 - `--sort-order`: The sort order of the table columns. Either `asc` or `desc`. Default to `asc`
 
 To view the full list of available options, use the following command:
