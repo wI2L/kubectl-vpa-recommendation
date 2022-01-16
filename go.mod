@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/muesli/termenv v0.9.0
-	github.com/olekukonko/tablewriter v0.0.4
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	gopkg.in/inf.v0 v0.9.1
