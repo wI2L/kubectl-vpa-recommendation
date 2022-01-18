@@ -3,11 +3,13 @@ package vpa
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,10 +43,10 @@ type TargetController struct {
 }
 
 // NewTargetController resolves the target of a VPA resource.
-func NewTargetController(client client.Interface, ref *autoscalingv1.CrossVersionObjectReference, namespace string) (*TargetController, error) {
+func NewTargetController(c client.Interface, ref *autoscalingv1.CrossVersionObjectReference, namespace string) (*TargetController, error) {
 	ctx := context.Background()
 
-	obj, err := client.GetVPATarget(ctx, ref, namespace)
+	obj, err := c.GetVPATarget(ctx, ref, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch VPa target: %w", err)
 	}
@@ -71,7 +73,46 @@ func NewTargetController(client client.Interface, ref *autoscalingv1.CrossVersio
 	if err != nil {
 		return nil, err
 	}
+	// The PodSpec template defined by a controller might not represent
+	// the final spec of the pods. For example, a LimitRanger controller
+	// could change the spec of pods to set default resource requests and
+	// limits. To ensure that we have a reliable comparison source, we have
+	// no choice but to list the pods and find those who are dependents of
+	// the controller to get the most up-to-date spec.
+	m, _, err := unstructuredv1.NestedMap(obj.Object, "metadata")
+	if err != nil {
+		return nil, err
+	}
+	meta := metav1.ObjectMeta{}
+	conv := runtime.DefaultUnstructuredConverter
+
+	if err := conv.FromUnstructured(m, &meta); err != nil {
+		return nil, err
+	}
+	pods, err := c.ListDependentPods(context.Background(), meta)
+	if err != nil {
+		return nil, err
+	}
+	if len(pods) != 0 {
+		p := pods[0]
+		if !reflect.DeepEqual(p.Spec.Containers, tc.podSpec.Containers) {
+			tc.podSpec = &p.Spec
+		}
+	}
 	return tc, nil
+}
+
+// GetContainerRequests returns the resource requests of a container.
+func (tc *TargetController) GetContainerRequests(name string) *ResourceQuantities {
+	for _, c := range tc.podSpec.Containers {
+		if c.Name == name {
+			return &ResourceQuantities{
+				CPU:    c.Resources.Requests.Cpu(),
+				Memory: c.Resources.Requests.Memory(),
+			}
+		}
+	}
+	return nil
 }
 
 // GetRequests returns the resource requests defined by the
@@ -89,23 +130,7 @@ func (tc *TargetController) GetRequests() *ResourceQuantities {
 			mem.Add(*m)
 		}
 	}
-	return &ResourceQuantities{
-		CPU:    &cpu,
-		Memory: &mem,
-	}
-}
-
-// GetContainerRequests returns the resource requests of a container.
-func (tc *TargetController) GetContainerRequests(name string) *ResourceQuantities {
-	for _, c := range tc.podSpec.Containers {
-		if c.Name == name {
-			return &ResourceQuantities{
-				CPU:    c.Resources.Requests.Cpu(),
-				Memory: c.Resources.Requests.Memory(),
-			}
-		}
-	}
-	return nil
+	return &ResourceQuantities{CPU: &cpu, Memory: &mem}
 }
 
 // resolvePodSpec returns the corev1.PodSpec field of a

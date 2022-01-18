@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/dynamic"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/kubectl/pkg/cmd/get"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/util"
@@ -102,10 +103,15 @@ func (f *Flags) NewClient() (Interface, error) {
 	if err != nil {
 		return nil, err
 	}
+	pc, err := corev1client.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 	c := &client{
 		flags:           f,
 		dynamicClient:   dyn,
 		discoveryClient: dis,
+		coreClient:      pc,
 		mapper:          m,
 	}
 	return c, nil

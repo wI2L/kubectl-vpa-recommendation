@@ -3,9 +3,11 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +18,8 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/pager"
 )
 
 const vpaKind = "VerticalPodAutoscaler"
@@ -39,6 +43,7 @@ type Interface interface {
 	HasGroupVersion(version schema.GroupVersion) (bool, error)
 	ListVPAResources(context.Context, ListOptions) ([]*vpav1.VerticalPodAutoscaler, error)
 	GetVPATarget(context.Context, *autoscalingv1.CrossVersionObjectReference, string) (*unstructuredv1.Unstructured, error)
+	ListDependentPods(ctx context.Context, targetMeta metav1.ObjectMeta) ([]*corev1.Pod, error)
 }
 
 var _ Interface = (*client)(nil)
@@ -49,6 +54,7 @@ type client struct {
 	flags           *Flags
 	dynamicClient   dynamic.Interface
 	discoveryClient discovery.DiscoveryInterface
+	coreClient      *corev1client.CoreV1Client
 	mapper          meta.RESTMapper
 
 	// lock during lazy init of the client
@@ -181,6 +187,44 @@ func (c *client) GetVPATarget(ctx context.Context, ref *autoscalingv1.CrossVersi
 		}
 	}
 	return obj, nil
+}
+
+// ListDependentPods returns the list of pods that depends
+// on the controller represented by its metadata.
+func (c *client) ListDependentPods(ctx context.Context, targetMeta metav1.ObjectMeta) ([]*corev1.Pod, error) {
+	i := c.coreClient.Pods(targetMeta.Namespace)
+
+	p := pager.New(func(ctx context.Context, o metav1.ListOptions) (runtime.Object, error) {
+		return i.List(ctx, o)
+	})
+	obj, _, err := p.List(ctx, metav1.ListOptions{
+		Limit: 250,
+	})
+	if err != nil {
+		return nil, err
+	}
+	list := obj.(*corev1.PodList)
+	pods := make([]*corev1.Pod, 0)
+
+	for i, pod := range list.Items {
+		for _, ref := range pod.GetOwnerReferences() {
+			// TODO(will): This is rather weak.
+			// Instead, we should go through the chain of owner references
+			// to find the top-most controller that match the target ref
+			// of the VerticalPodAutoscaler resource.
+			// i.e. Pod -> ReplicaSet -> Deployment
+			if referenceMatchController(ref, targetMeta) {
+				pods = append(pods, &list.Items[i])
+			}
+		}
+	}
+	return pods, nil
+}
+
+// referenceMatchController returns whether the given
+// OwnerReference matches a target controller.
+func referenceMatchController(ref metav1.OwnerReference, targetMeta metav1.ObjectMeta) bool {
+	return strings.HasPrefix(ref.Name, targetMeta.Name)
 }
 
 // hasMatchingGroupVersions returns whether the group versions lists match.
