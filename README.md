@@ -4,6 +4,7 @@
     <a href="https://github.com/wI2L/kubectl-commitment/actions"><img src="https://github.com/wI2L/kubectl-commitment/workflows/ci/badge.svg"></a>
     <a href="https://goreportcard.com/report/github.com/wI2L/kubectl-commitment"><img src="https://goreportcard.com/badge/github.com/wI2L/kubectl-commitment"></a>
     <a href="https://github.com/wI2L/kubectl-commitment/releases"><img src="https://img.shields.io/github/v/tag/wI2L/kubectl-commitment?color=blueviolet&label=release&sort=semver"></a>
+    <img src="https://codecov.io/gh/wI2L/kubectl-commitment/branch/master/graph/badge.svg?token=UTD8CW2ZS2"/>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
 </p>
 
