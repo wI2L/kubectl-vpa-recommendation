@@ -65,6 +65,10 @@ To view the full list of available options, use the following command:
 $ kubectl commitment --help
 ```
 
+## Limitations
+
+- Unlike the [official VPA recommender](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/recommender/README.md), which is fully generic and handle any kind of "scalable" resources, the plugin only recognize the *well-known* controllers such as: `CronJob`, `DaemonSet`, `Deployment`, `Job`, `ReplicaSet`, `ReplicationController`, `StatefulSet`.
+
 ## License
 
 This plugin is licensed under the **MIT** license. See the [LICENSE](LICENSE) file.
