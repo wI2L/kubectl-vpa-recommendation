@@ -1,10 +1,10 @@
-# kubectl commitment
+# `kubectl vpa-recommendation`
 
 <p align="left">
-    <a href="https://github.com/wI2L/kubectl-commitment/actions"><img src="https://github.com/wI2L/kubectl-commitment/workflows/ci/badge.svg"></a>
-    <a href="https://goreportcard.com/report/github.com/wI2L/kubectl-commitment"><img src="https://goreportcard.com/badge/github.com/wI2L/kubectl-commitment"></a>
-    <a href="https://github.com/wI2L/kubectl-commitment/releases"><img src="https://img.shields.io/github/v/tag/wI2L/kubectl-commitment?color=blueviolet&label=release&sort=semver"></a>
-    <img src="https://codecov.io/gh/wI2L/kubectl-commitment/branch/master/graph/badge.svg?token=UTD8CW2ZS2"/>
+    <a href="https://github.com/wI2L/kubectl-vpa-recommendation/actions"><img src="https://github.com/wI2L/kubectl-vpa-recommendation/workflows/ci/badge.svg"></a>
+    <a href="https://goreportcard.com/report/github.com/wI2L/kubectl-vpa-recommendation"><img src="https://goreportcard.com/badge/github.com/wI2L/kubectl-vpa-recommendation"></a>
+    <a href="https://github.com/wI2L/kubectl-vpa-recommendation/releases"><img src="https://img.shields.io/github/v/tag/wI2L/kubectl-vpa-recommendation?color=blueviolet&label=release&sort=semver"></a>
+    <img src="https://codecov.io/gh/wI2L/kubectl-vpa-recommendation/branch/master/graph/badge.svg?token=UTD8CW2ZS2"/>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
 </p>
 
@@ -14,23 +14,30 @@ The plugin is compatible with Kubernetes servers starting from version 1.16, whi
 
 ## Installation
 
+### With [Krew](https://krew.sigs.k8s.io/)
+
+```shell
+$ kubectl krew install vpa-recommendation
+$ kubectl vpa-recommendation --help
+```
+
 ### Manual download
 
-Head to the [releases](https://github.com/wI2L/kubectl-commitment/releases) page to download an existing release for your OS/arch, and add the path to the binary to your `$PATH`.
+Head to the [releases](https://github.com/wI2L/kubectl-vpa-recommendation/releases) page to download an existing release for your OS/arch, and add the path to the binary to your `$PATH`.
 
 ### Build from source
 
-:warning: `kubectl-commitment` requires [Go 1.17+](https://golang.org/doc/install) to build.
+:warning: `kubectl-vpa-recommendation` requires [Go 1.17+](https://golang.org/doc/install) to build.
 
 To build the plugin yourself from the source, use the following commands:
 
 ```shell
-$ git clone git@github.com:wI2L/kubectl-commitment.git
-$ cd kubectl-commitment
+$ git clone git@github.com:wI2L/kubectl-vpa-recommendation.git
+$ cd kubectl-vpa-recommendation
 $ make build
 ```
 
-It creates a single binary file for the host machine platform/architecture in the `dist/` folder. Move it somewhere within your `$PATH`, such as `$GOPATH/bin`. You can then invoke it directly (`kubectl-commitment`), or via `kubectl` (`kubectl commitment`).
+It creates a single binary file for the host machine platform/architecture in the `dist/` folder. Move it somewhere within your `$PATH`, such as `$GOPATH/bin`. You can then invoke it directly (`kubectl-vpa-recommendation`), or via `kubectl` (`kubectl vpa-recommendation`).
 
 ## Usage
 
@@ -63,12 +70,12 @@ Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s
 To view the full list of available options, use the following command:
 
 ```shell
-$ kubectl commitment --help
+$ kubectl vpa-recommendation --help
 ```
 
 ## Limitations
 
-- Unlike the [official VPA recommender](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/recommender/README.md), which is fully generic and handle any kind of "scalable" resources, the plugin only recognize the *well-known* controllers such as: `CronJob`, `DaemonSet`, `Deployment`, `Job`, `ReplicaSet`, `ReplicationController`, `StatefulSet`.
+- Unlike the [official VPA recommender](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/recommender/README.md), which is fully generic and handle any kind of "scalable" resources, the plugin recognize only some *well-known* controllers such as: `CronJob`, `DaemonSet`, `Deployment`, `Job`, `ReplicaSet`, `ReplicationController`, `StatefulSet`.
 
 ## License
 

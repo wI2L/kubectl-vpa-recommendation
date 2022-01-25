@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/wI2L/kubectl-commitment/client"
+	"github.com/wI2L/kubectl-vpa-recommendation/client"
 )
 
 // wellKnownControllerKind represents the Kind of common controllers.
@@ -73,6 +73,14 @@ func NewTargetController(c client.Interface, ref *autoscalingv1.CrossVersionObje
 	if err != nil {
 		return nil, err
 	}
+	labelSelector, err := resolveLabelSelector(obj)
+	if err != nil {
+		return nil, err
+	}
+	selector, err := metav1.LabelSelectorAsSelector(labelSelector)
+	if err != nil {
+		return nil, err
+	}
 	// The PodSpec template defined by a controller might not represent
 	// the final spec of the pods. For example, a LimitRanger controller
 	// could change the spec of pods to set default resource requests and
@@ -89,7 +97,7 @@ func NewTargetController(c client.Interface, ref *autoscalingv1.CrossVersionObje
 	if err := conv.FromUnstructured(m, &meta); err != nil {
 		return nil, err
 	}
-	pods, err := c.ListDependentPods(context.Background(), meta)
+	pods, err := c.ListDependentPods(context.Background(), meta, selector.String())
 	if err != nil {
 		return nil, err
 	}
@@ -103,22 +111,22 @@ func NewTargetController(c client.Interface, ref *autoscalingv1.CrossVersionObje
 }
 
 // GetContainerRequests returns the resource requests of a container.
-func (tc *TargetController) GetContainerRequests(name string) *ResourceQuantities {
+func (tc *TargetController) GetContainerRequests(name string) ResourceQuantities {
 	for _, c := range tc.podSpec.Containers {
 		if c.Name == name {
-			return &ResourceQuantities{
+			return ResourceQuantities{
 				CPU:    c.Resources.Requests.Cpu(),
 				Memory: c.Resources.Requests.Memory(),
 			}
 		}
 	}
-	return nil
+	return ResourceQuantities{}
 }
 
 // GetRequests returns the resource requests defined by the
 // pod spec of the controller, which is the sum of all resource
 // quantities for each container declared by the spec.
-func (tc *TargetController) GetRequests() *ResourceQuantities {
+func (tc *TargetController) GetRequests() ResourceQuantities {
 	var cpu, mem resource.Quantity
 
 	for _, ctr := range tc.podSpec.Containers {
@@ -130,20 +138,47 @@ func (tc *TargetController) GetRequests() *ResourceQuantities {
 			mem.Add(*m)
 		}
 	}
-	return &ResourceQuantities{CPU: &cpu, Memory: &mem}
+	return ResourceQuantities{CPU: &cpu, Memory: &mem}
 }
 
-// resolvePodSpec returns the corev1.PodSpec field of a
-// controller. The method cache the result during its first
-// call and return the same value for subsequent calls.
+// resolvePodSpec returns the corev1.PodSpec field of a controller.
 func resolvePodSpec(obj *unstructuredv1.Unstructured) (*corev1.PodSpec, error) {
-	kind := obj.GetKind()
-
 	fields := []string{
 		"spec",
 		"template", // PodTemplateSpec
 		"spec",     // PodSpec
 	}
+	var err error
+	fields, err = genericControllerSpecPath(obj.GetKind(), fields)
+	if err != nil {
+		return nil, err
+	}
+	spec := &corev1.PodSpec{}
+	if err := decodeNestedFieldInto(obj, fields, spec); err != nil {
+		return nil, err
+	}
+	return spec, nil
+}
+
+// resolveLabelSelector returns the metav1.LabelSelector field of a controller spec.
+func resolveLabelSelector(obj *unstructuredv1.Unstructured) (*metav1.LabelSelector, error) {
+	fields := []string{
+		"spec",
+		"selector",
+	}
+	var err error
+	fields, err = genericControllerSpecPath(obj.GetKind(), fields)
+	if err != nil {
+		return nil, err
+	}
+	selector := &metav1.LabelSelector{}
+	if err := decodeNestedFieldInto(obj, fields, selector); err != nil {
+		return nil, err
+	}
+	return selector, nil
+}
+
+func genericControllerSpecPath(kind string, fields []string) ([]string, error) {
 	switch wellKnownControllerKind(kind) {
 	case ds, deploy, job, rs, rc, sts:
 		// Same default fields.
@@ -152,23 +187,22 @@ func resolvePodSpec(obj *unstructuredv1.Unstructured) (*corev1.PodSpec, error) {
 			"spec",        // CronJobSpec
 			"jobTemplate", // JobTemplateSpec
 		}
-		fields = append(prefix, fields...)
+		return append(prefix, fields...), nil
 	default:
 		return nil, fmt.Errorf("unknown kind: %s", kind)
 	}
+	return fields, nil
+}
+
+func decodeNestedFieldInto(obj *unstructuredv1.Unstructured, fields []string, into interface{}) error {
 	nmap, ok, err := unstructuredv1.NestedMap(obj.Object, fields...)
 	if err != nil {
-		return nil, fmt.Errorf("nested field has invalid type")
+		return fmt.Errorf("nested field has invalid type")
 	}
 	if !ok {
-		return nil, fmt.Errorf("nested field with path %s not found", strings.Join(fields, "."))
+		return fmt.Errorf("nested field with path %s not found", strings.Join(fields, "."))
 	}
 	conv := runtime.DefaultUnstructuredConverter
-	spec := &corev1.PodSpec{}
 
-	err = conv.FromUnstructured(nmap, spec)
-	if err != nil {
-		return nil, err
-	}
-	return spec, nil
+	return conv.FromUnstructured(nmap, into)
 }

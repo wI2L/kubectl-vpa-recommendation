@@ -1,4 +1,4 @@
-module github.com/wI2L/kubectl-commitment
+module github.com/wI2L/kubectl-vpa-recommendation
 
 go 1.17
 

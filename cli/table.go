@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/wI2L/kubectl-commitment/vpa"
+	"github.com/wI2L/kubectl-vpa-recommendation/vpa"
 )
 
 const (
@@ -54,8 +54,8 @@ type tableRow struct {
 	Mode             string
 	TargetName       string
 	TargetGVK        schema.GroupVersionKind
-	Requests         *vpa.ResourceQuantities
-	Recommendations  *vpa.ResourceQuantities
+	Requests         vpa.ResourceQuantities
+	Recommendations  vpa.ResourceQuantities
 	CPUDifference    *float64
 	MemoryDifference *float64
 	Children         []*tableRow

@@ -22,7 +22,7 @@ type ResourceQuantities struct {
 // two quantities expressed as a percentage of each other,
 // where x is the request and y the recommendation.
 func DiffQuantitiesAsPercent(x, y *resource.Quantity) *float64 {
-	if x.IsZero() || y.IsZero() {
+	if x == nil || y == nil || x.IsZero() || y.IsZero() {
 		return nil
 	}
 	ai, oka := x.AsInt64()

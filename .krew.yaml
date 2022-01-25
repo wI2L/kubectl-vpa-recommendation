@@ -1,43 +1,55 @@
 apiVersion: krew.googlecontainertools.github.com/v1alpha2
 kind: Plugin
 metadata:
-  name: commitment
+  name: vpa-recommendation
 spec:
   version: {{ .TagName }}
-  homepage: https://github.com/wI2L/kubectl-commitment
-  shortDescription: Compare VerticalPodAutoscaler recommendations to actual resources requests
+  homepage: https://github.com/wI2L/kubectl-vpa-recommendation
+  shortDescription: Compare VPA recommendations to actual resources requests
   description: |
     This plugin prints a table that show the percentage increase/decrease
     of the selected VerticalPodAutoscaler recommendations compared to the
     targeted controller's pod resource requests.
+  caveats: |
+    The plugin recognizes only some well-known controllers such as:
+      - CronJob
+      - DaemonSet
+      - Deployment
+      - Job
+      - ReplicaSet
+      - ReplicationController
+      - StatefulSet
+
+    The autoscaling.k8s.io/v1 API is required for the plugin to work:
+    https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler
   platforms:
-    - selector:
-        matchLabels:
-          os: darwin
-          arch: amd64
-      {{addURIAndSha "https://github.com/wI2L/kubectl-commitment/releases/download/{{ .TagName }}/kubectl-commitment_darwin_amd64.tar.gz" .TagName }}
-      bin: kubectl-commitment
-    - selector:
-        matchLabels:
-          os: darwin
-          arch: arm64
-      {{addURIAndSha "https://github.com/wI2L/kubectl-commitment/releases/download/{{ .TagName }}/kubectl-commitment_darwin_arm64.tar.gz" .TagName }}
-      bin: kubectl-commitment
-    - selector:
-        matchLabels:
-          os: linux
-          arch: amd64
-      {{addURIAndSha "https://github.com/wI2L/kubectl-commitment/releases/download/{{ .TagName }}/kubectl-commitment_linux_amd64.tar.gz" .TagName }}
-      bin: kubectl-commitment
-    - selector:
-        matchLabels:
-          os: linux
-          arch: arm64
-      {{addURIAndSha "https://github.com/wI2L/kubectl-commitment/releases/download/{{ .TagName }}/kubectl-commitment_linux_arm64.tar.gz" .TagName }}
-      bin: kubectl-commitment
-    - selector:
-        matchLabels:
-          os: windows
-          arch: amd64
-      {{addURIAndSha "https://github.com/wI2L/kubectl-commitment/releases/download/{{ .TagName }}/kubectl-commitment_windows_amd64.zip" .TagName }}
-      bin: kubectl-commitment.exe
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: amd64
+    {{addURIAndSha "https://github.com/wI2L/kubectl-vpa-recommendation/releases/download/{{ .TagName }}/kubectl-vpa-recommendation_{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
+    bin: kubectl-vpa-recommendation
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    {{addURIAndSha "https://github.com/wI2L/kubectl-vpa-recommendation/releases/download/{{ .TagName }}/kubectl-vpa-recommendation_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
+    bin: kubectl-vpa-recommendation
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    {{addURIAndSha "https://github.com/wI2L/kubectl-vpa-recommendation/releases/download/{{ .TagName }}/kubectl-vpa-recommendation_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
+    bin: kubectl-vpa-recommendation
+  - selector:
+      matchLabels:
+        os: linux
+        arch: arm64
+    {{addURIAndSha "https://github.com/wI2L/kubectl-vpa-recommendation/releases/download/{{ .TagName }}/kubectl-vpa-recommendation_{{ .TagName }}_linux_arm64.tar.gz" .TagName }}
+    bin: kubectl-vpa-recommendation
+  - selector:
+      matchLabels:
+        os: windows
+        arch: amd64
+    {{addURIAndSha "https://github.com/wI2L/kubectl-vpa-recommendation/releases/download/{{ .TagName }}/kubectl-vpa-recommendation_{{ .TagName }}_windows_amd64.zip" .TagName }}
+    bin: kubectl-vpa-recommendation.exe

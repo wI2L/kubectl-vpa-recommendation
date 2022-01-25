@@ -43,7 +43,7 @@ type Interface interface {
 	HasGroupVersion(version schema.GroupVersion) (bool, error)
 	ListVPAResources(context.Context, ListOptions) ([]*vpav1.VerticalPodAutoscaler, error)
 	GetVPATarget(context.Context, *autoscalingv1.CrossVersionObjectReference, string) (*unstructuredv1.Unstructured, error)
-	ListDependentPods(ctx context.Context, targetMeta metav1.ObjectMeta) ([]*corev1.Pod, error)
+	ListDependentPods(ctx context.Context, targetMeta metav1.ObjectMeta, labelSelector string) ([]*corev1.Pod, error)
 }
 
 var _ Interface = (*client)(nil)
@@ -191,14 +191,15 @@ func (c *client) GetVPATarget(ctx context.Context, ref *autoscalingv1.CrossVersi
 
 // ListDependentPods returns the list of pods that depends
 // on the controller represented by its metadata.
-func (c *client) ListDependentPods(ctx context.Context, targetMeta metav1.ObjectMeta) ([]*corev1.Pod, error) {
+func (c *client) ListDependentPods(ctx context.Context, targetMeta metav1.ObjectMeta, labelSelector string) ([]*corev1.Pod, error) {
 	i := c.coreClient.Pods(targetMeta.Namespace)
 
 	p := pager.New(func(ctx context.Context, o metav1.ListOptions) (runtime.Object, error) {
 		return i.List(ctx, o)
 	})
 	obj, _, err := p.List(ctx, metav1.ListOptions{
-		Limit: 250,
+		LabelSelector: labelSelector,
+		Limit:         250,
 	})
 	if err != nil {
 		return nil, err

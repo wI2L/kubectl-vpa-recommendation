@@ -18,9 +18,9 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 	"k8s.io/utils/pointer"
 
-	"github.com/wI2L/kubectl-commitment/client"
-	"github.com/wI2L/kubectl-commitment/internal/version"
-	"github.com/wI2L/kubectl-commitment/vpa"
+	"github.com/wI2L/kubectl-vpa-recommendation/client"
+	"github.com/wI2L/kubectl-vpa-recommendation/internal/version"
+	"github.com/wI2L/kubectl-vpa-recommendation/vpa"
 )
 
 const (
@@ -218,7 +218,7 @@ func (co *CommandOptions) bindRecommendationsAndRequests(list []*vpav1.VerticalP
 				childRow := &tableRow{
 					Name:             fmt.Sprintf("%s %s", prefix, c.ContainerName),
 					Requests:         rqs,
-					Recommendations:  &rcs,
+					Recommendations:  rcs,
 					CPUDifference:    vpa.DiffQuantitiesAsPercent(rqs.CPU, rcs.CPU),
 					MemoryDifference: vpa.DiffQuantitiesAsPercent(rqs.Memory, rcs.Memory),
 				}
