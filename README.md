@@ -64,7 +64,7 @@ Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s
 - `--show-containers`, `-c`: Display containers recommendations for each `VerticalPodAutoscaler` resource
 - `--show-kind`, `-k`: Show the resource type for the requested object(s) and their target
 - `--show-namespace`: Show resource namespace as the first column
-- `--sort-columns`: Comma-separated list of column names for sorting the table. Default to `namespace,name`
+- `--sort-columns`: Comma-separated list of column names for sorting the table. Any of: cpu-diff, cpu-rec, cpu-req, mem-diff, mem-rec, mem-request, name, namespace, target. Default to `namespace,name`
 - `--sort-order`: The sort order of the table columns. Either `asc` or `desc`. Default to `asc`
 
 To view the full list of available options, use the following command:

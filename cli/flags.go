@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/spf13/pflag"
 )
 
@@ -76,7 +80,7 @@ func (f *Flags) AddFlags(flags *pflag.FlagSet) {
 		"The sort order of the table columns. Either 'asc' or 'desc'")
 
 	flags.StringSliceVar(&f.SortColumns, flagSortColumns, f.SortColumns,
-		"List of column names for sorting the table")
+		fmt.Sprintf("Comma-separated list of column names for sorting the table. Any of: %s", strings.Join(sortColumnsFlagValues(), ", ")))
 
 	flags.StringVarP(&f.LabelSelector, flagLabelSelector, flagLabelSelectorShorthand, f.LabelSelector,
 		"Selector (label query) to filter on, supports '=', '==', and '!=' (e.g. -l key1=value1,key2=value2)")
@@ -87,4 +91,13 @@ func (f *Flags) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVarP(&f.Output, flagOutput, flagOutputShorthand, f.Output,
 		"Output format. Empty string or 'wide'",
 	)
+}
+
+func sortColumnsFlagValues() []string {
+	keys := make([]string, 0, len(columnLessFunc))
+	for k := range columnLessFunc {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
