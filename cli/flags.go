@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
+
+	"github.com/wI2L/kubectl-vpa-recommendation/vpa"
 )
 
 const (
@@ -25,33 +27,37 @@ const (
 	flagFieldSelector           = "field-selector"
 	flagOutput                  = "output"
 	flagOutputShorthand         = "o"
+	flagRecommendationType      = "recommendation-type"
 )
 
 var (
-	defaultSortOrder   = orderAsc
-	defaultSortColumns = []string{"namespace", "name"}
+	defaultSortOrder          = orderAsc
+	defaultSortColumns        = []string{"namespace", "name"}
+	defaultRecommendationType = vpa.RecommendationTarget
 )
 
 // Flags represents the common command flags.
 type Flags struct {
-	AllNamespaces  bool
-	ShowNamespace  bool
-	ShowKind       bool
-	ShowContainers bool
-	NoColors       bool
-	NoHeaders      bool
-	SortOrder      sortOrder
-	SortColumns    []string
-	LabelSelector  string
-	FieldSelector  string
-	Output         string
+	AllNamespaces      bool
+	ShowNamespace      bool
+	ShowKind           bool
+	ShowContainers     bool
+	NoColors           bool
+	NoHeaders          bool
+	SortOrder          sortOrder
+	SortColumns        []string
+	LabelSelector      string
+	FieldSelector      string
+	Output             string
+	RecommendationType vpa.RecommendationType
 }
 
 // DefaultFlags returns default command flags.
 func DefaultFlags() *Flags {
 	f := &Flags{
-		SortOrder:   defaultSortOrder,
-		SortColumns: defaultSortColumns,
+		SortOrder:          defaultSortOrder,
+		SortColumns:        defaultSortColumns,
+		RecommendationType: defaultRecommendationType,
 	}
 	return f
 }
@@ -91,6 +97,10 @@ func (f *Flags) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVarP(&f.Output, flagOutput, flagOutputShorthand, f.Output,
 		"Output format. Empty string or 'wide'",
 	)
+
+	flags.Var(&f.RecommendationType, flagRecommendationType,
+		fmt.Sprintf("The type of recommendation to use in comparisons. One of: %s", strings.Join(recommendationTypeFlagValues(), ", ")),
+	)
 }
 
 func sortColumnsFlagValues() []string {
@@ -100,4 +110,15 @@ func sortColumnsFlagValues() []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func recommendationTypeFlagValues() []string {
+	v := []string{
+		vpa.RecommendationTarget.String(),
+		vpa.RecommendationLowerBound.String(),
+		vpa.RecommendationUpperBound.String(),
+		vpa.RecommendationUncappedTarget.String(),
+	}
+	sort.Strings(v)
+	return v
 }

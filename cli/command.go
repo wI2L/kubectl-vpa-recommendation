@@ -197,7 +197,7 @@ func (co *CommandOptions) bindRecommendationsAndRequests(list []*vpav1.VerticalP
 			klog.V(4).Infof("couldn't get target for vpa %s/%s", v.Namespace, v.Name)
 			continue
 		}
-		row := newTableRow(v, tc, v.Name)
+		row := newTableRow(v, tc, v.Name, co.Flags.RecommendationType)
 		table = append(table, row)
 
 		if v.Status.Recommendation != nil && len(v.Status.Recommendation.ContainerRecommendations) > 1 {
@@ -229,9 +229,9 @@ func (co *CommandOptions) bindRecommendationsAndRequests(list []*vpav1.VerticalP
 	return table
 }
 
-func newTableRow(v *vpav1.VerticalPodAutoscaler, tc *vpa.TargetController, name string) *tableRow {
+func newTableRow(v *vpav1.VerticalPodAutoscaler, tc *vpa.TargetController, name string, rt vpa.RecommendationType) *tableRow {
 	rqs := tc.GetRequests()
-	rcs := vpa.GetTotalRecommendations(v)
+	rcs := vpa.TotalRecommendations(v, rt)
 
 	row := &tableRow{
 		Name:             name,
