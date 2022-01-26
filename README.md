@@ -1,4 +1,4 @@
-# `kubectl vpa-recommendation`
+# kubectl vpa-recommendation
 
 <p align="left">
     <a href="https://github.com/wI2L/kubectl-vpa-recommendation/actions"><img src="https://github.com/wI2L/kubectl-vpa-recommendation/workflows/ci/badge.svg"></a>
@@ -27,7 +27,7 @@ Head to the [releases](https://github.com/wI2L/kubectl-vpa-recommendation/releas
 
 ### Build from source
 
-:warning: `kubectl-vpa-recommendation` requires [Go 1.17+](https://golang.org/doc/install) to build.
+:warning: The plugin requires [Go 1.17+](https://golang.org/doc/install) to build.
 
 To build the plugin yourself from the source, use the following commands:
 
@@ -37,7 +37,7 @@ $ cd kubectl-vpa-recommendation
 $ make build
 ```
 
-It creates a single binary file for the host machine platform/architecture in the `dist/` folder. Move it somewhere within your `$PATH`, such as `$GOPATH/bin`. You can then invoke it directly (`kubectl-vpa-recommendation`), or via `kubectl` (`kubectl vpa-recommendation`).
+It creates a single binary file for the host machine platform/architecture in the `dist/` folder. Move it somewhere within your `$PATH`, such as `$GOPATH/bin`. You can then invoke it directly (`kubectl-vpa-recommendation`), or via `kubectl` (`kubectl vpa recommendation`).
 
 ## Usage
 
@@ -70,7 +70,7 @@ Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s
 To view the full list of available options, use the following command:
 
 ```shell
-$ kubectl vpa-recommendation --help
+$ kubectl vpa recommendation --help
 ```
 
 ## Limitations
