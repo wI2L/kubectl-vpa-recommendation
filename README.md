@@ -18,7 +18,7 @@ The plugin is compatible with Kubernetes servers starting from version 1.16, whi
 
 ```shell
 $ kubectl krew install vpa-recommendation
-$ kubectl vpa recommendation --help
+$ kubectl vpa-recommendation --help
 ```
 
 ### Manual download
@@ -37,7 +37,7 @@ $ cd kubectl-vpa-recommendation
 $ make build
 ```
 
-It creates a single binary file for the host machine platform/architecture in the `dist/` folder. Move it somewhere within your `$PATH`, such as `$GOPATH/bin`. You can then invoke it directly (`kubectl-vpa-recommendation`), or via `kubectl` (`kubectl vpa recommendation`).
+It creates a single binary file for the host machine platform/architecture in the `dist/` folder. Move it somewhere within your `$PATH`, such as `$GOPATH/bin`. You can then invoke it directly (`kubectl-vpa-recommendation`), or via `kubectl` (`kubectl vpa-recommendation`).
 
 ## Usage
 
@@ -70,7 +70,7 @@ Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s
 To view the full list of available options, use the following command:
 
 ```shell
-$ kubectl vpa recommendation --help
+$ kubectl vpa-recommendation --help
 ```
 
 ## Limitations
