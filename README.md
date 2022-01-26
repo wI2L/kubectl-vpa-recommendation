@@ -18,7 +18,7 @@ The plugin is compatible with Kubernetes servers starting from version 1.16, whi
 
 ```shell
 $ kubectl krew install vpa-recommendation
-$ kubectl vpa-recommendation --help
+$ kubectl vpa recommendation --help
 ```
 
 ### Manual download
