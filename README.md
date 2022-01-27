@@ -16,7 +16,7 @@ The plugin is compatible with Kubernetes servers starting from version 1.16, whi
 
 ### With [Krew](https://krew.sigs.k8s.io/)
 
-Follow these [instructions](https://github.com/kubernetes-sigs/krew#installation) to install `krew`. Then run the following command:
+Follow these [instructions](https://github.com/kubernetes-sigs/krew#installation) to install `krew`. Then run the following commands:
 
 ```shell
 $ kubectl krew install vpa-recommendation
@@ -63,7 +63,8 @@ Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s
 - `--no-colors`: Do not use colors to highlight increase/decrease percentage values
 - `--no-headers`: Do not print table headers
 - `--output`, `-o`: Output format. Empty string or `wide`
-- `--recommendation-type`: The type of recommendation to use in comparisons. One of: `lower-bound`, `target`, `uncapped-target`, `upper-bound`. Default to `target` (see [`RecommendedContainerResources`](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L245) for more details about the fields represented by each possible value)
+- `--recommendation-type`: The type of recommendation to use in comparisons. One of: `lower-bound`, `target`, `uncapped-target`, `upper-bound`. Default to `target`
+    - see [`RecommendedContainerResources`](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L245) for more details about the fields represented by each possible value
 - `--show-containers`, `-c`: Display containers recommendations for each `VerticalPodAutoscaler` resource
 - `--show-kind`, `-k`: Show the resource type for the requested object(s) and their target
 - `--show-namespace`: Show resource namespace as the first column
