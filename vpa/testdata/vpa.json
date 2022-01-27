@@ -1,0 +1,72 @@
+{
+    "apiVersion": "autoscaling.k8s.io/v1",
+    "kind": "VerticalPodAutoscaler",
+    "metadata": {
+        "creationTimestamp": "2022-01-01T00:00:00Z",
+        "generation": 666,
+        "name": "vpa-foo",
+        "namespace": "default",
+        "uid": "037b5ff4-250f-439b-8608-49f7e546f3ec"
+    },
+    "spec": {
+        "targetRef": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "name": "foo"
+        },
+        "updatePolicy": {
+            "updateMode": "Off"
+        }
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2022-01-01T00:01:00Z",
+                "status": "True",
+                "type": "RecommendationProvided"
+            }
+        ],
+        "recommendation": {
+            "containerRecommendations": [
+                {
+                    "containerName": "bar",
+                    "lowerBound": {
+                        "cpu": "25m",
+                        "memory": "32M"
+                    },
+                    "target": {
+                        "cpu": "100m",
+                        "memory": "64M"
+                    },
+                    "uncappedTarget": {
+                        "cpu": "150m",
+                        "memory": "128M"
+                    },
+                    "upperBound": {
+                        "cpu": "300m",
+                        "memory": "256M"
+                    }
+                },
+                {
+                    "containerName": "baz",
+                    "lowerBound": {
+                        "cpu": "40m",
+                        "memory": "100M"
+                    },
+                    "target": {
+                        "cpu": "250m",
+                        "memory": "120M"
+                    },
+                    "uncappedTarget": {
+                        "cpu": "500m",
+                        "memory": "160M"
+                    },
+                    "upperBound": {
+                        "cpu": "666m",
+                        "memory": "180M"
+                    }
+                }
+            ]
+        }
+    }
+}
