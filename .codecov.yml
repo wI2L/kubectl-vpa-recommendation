@@ -6,3 +6,5 @@ coverage:
       default:
         threshold: 1%
     patch: off
+ignore:
+  - internal/version
