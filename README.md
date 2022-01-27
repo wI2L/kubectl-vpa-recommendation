@@ -16,6 +16,8 @@ The plugin is compatible with Kubernetes servers starting from version 1.16, whi
 
 ### With [Krew](https://krew.sigs.k8s.io/)
 
+Follow these [instructions](https://github.com/kubernetes-sigs/krew#installation) to install `krew`. Then run the following command:
+
 ```shell
 $ kubectl krew install vpa-recommendation
 $ kubectl vpa-recommendation --help
