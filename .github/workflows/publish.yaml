@@ -1,0 +1,15 @@
+name: publish
+on:
+  release:
+    types:
+      - published
+jobs:
+  krew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Update new version of plugin in krew-index
+        uses: rajatjindal/krew-release-bot@v0.0.40
