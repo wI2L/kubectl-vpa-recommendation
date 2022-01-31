@@ -12,6 +12,7 @@ import (
 // recommendation made by a VPA recommender.
 type RecommendationType string
 
+// VPA recommendation types.
 const (
 	RecommendationTarget         RecommendationType = "target"
 	RecommendationLowerBound     RecommendationType = "lower-bound"
