@@ -19,7 +19,6 @@ const (
 	treeElemPrefix     = `├─`
 	treeLastElemPrefix = `└─`
 	tableUnsetCell     = `-`
-	wideOutput         = "wide"
 )
 
 type sortOrder string
@@ -82,19 +81,16 @@ func (tr tableRow) toTableData(flags *Flags, isChild bool) []string {
 	if flags.ShowNamespace {
 		rowData = append(rowData, tr.Namespace)
 	}
-	rowData = append(rowData,
-		name,
-		tr.Mode,
-		targetName,
-	)
-	if flags.Output == wideOutput {
+	rowData = append(rowData, name, tr.Mode, targetName)
+
+	if flags.wide {
 		rowData = append(rowData,
 			formatQuantity(tr.Requests.CPU),
 			formatQuantity(tr.Recommendations.CPU),
 		)
 	}
 	rowData = append(rowData, formatPercentage(tr.CPUDifference, flags.NoColors))
-	if flags.Output == wideOutput {
+	if flags.wide {
 		rowData = append(rowData,
 			formatQuantity(tr.Requests.Memory),
 			formatQuantity(tr.Recommendations.Memory),
@@ -154,11 +150,11 @@ func (t table) Print(w io.Writer, flags *Flags) error {
 			headers = append(headers, hdrNamespace)
 		}
 		headers = append(headers, hdrName, hdrMode, hdrTarget)
-		if flags.Output == wideOutput {
+		if flags.wide {
 			headers = append(headers, hdrCPURequest, hdrCPUTarget)
 		}
 		headers = append(headers, hdrCPUDifference)
-		if flags.Output == wideOutput {
+		if flags.wide {
 			headers = append(headers, hdrMemRequest, hdrMemTarget)
 		}
 		headers = append(headers, hdrMemDifference)

@@ -30,6 +30,12 @@ const (
 	flagRecommendationType      = "recommendation-type"
 )
 
+const (
+	wideOutput      = "wide"
+	splitOutput     = "split"
+	splitWideOutput = "split-wide"
+)
+
 var (
 	defaultSortOrder          = orderAsc
 	defaultSortColumns        = []string{"namespace", "name"}
@@ -50,6 +56,9 @@ type Flags struct {
 	FieldSelector      string
 	Output             string
 	RecommendationType vpa.RecommendationType
+
+	wide  bool
+	split bool
 }
 
 // DefaultFlags returns default command flags.
@@ -95,10 +104,23 @@ func (f *Flags) AddFlags(flags *pflag.FlagSet) {
 		"Selector (field query) to filter on, supports '=', '==', and '!=' (e.g. --field-selector key1=value1,key2=value2)")
 
 	flags.StringVarP(&f.Output, flagOutput, flagOutputShorthand, f.Output,
-		"Output format. Empty string or 'wide'")
+		"Output format. One of 'wide', 'slit', 'split-wide'")
 
 	flags.Var(&f.RecommendationType, flagRecommendationType,
 		fmt.Sprintf("The type of recommendation to use in comparisons. One of: %s", strings.Join(recommendationTypeFlagValues(), ", ")))
+}
+
+// Tidy post-processes the flags.
+func (f *Flags) Tidy() {
+	switch f.Output {
+	case wideOutput:
+		f.wide = true
+	case splitOutput:
+		f.split = true
+	case splitWideOutput:
+		f.wide = true
+		f.split = true
+	}
 }
 
 func sortColumnsFlagValues() []string {
@@ -112,11 +134,15 @@ func sortColumnsFlagValues() []string {
 
 func recommendationTypeFlagValues() []string {
 	v := []string{
-		vpa.RecommendationTarget.String(),
-		vpa.RecommendationLowerBound.String(),
-		vpa.RecommendationUpperBound.String(),
-		vpa.RecommendationUncappedTarget.String(),
+		singleQuoted(vpa.RecommendationTarget.String()),
+		singleQuoted(vpa.RecommendationLowerBound.String()),
+		singleQuoted(vpa.RecommendationUpperBound.String()),
+		singleQuoted(vpa.RecommendationUncappedTarget.String()),
 	}
 	sort.Strings(v)
 	return v
+}
+
+func singleQuoted(s string) string {
+	return fmt.Sprintf("'%s'", s)
 }

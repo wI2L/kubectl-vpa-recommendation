@@ -5,6 +5,8 @@ import (
 	// Embed command example.
 	_ "embed"
 	"fmt"
+	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -71,6 +73,9 @@ func NewCmd(streams genericclioptions.IOStreams, name string) *cobra.Command {
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, tc string) ([]string, cobra.ShellCompDirective) {
 			comps := get.CompGetResource(f, cmd, vpaPlural, tc)
 			return comps, cobra.ShellCompDirectiveNoFileComp
+		},
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
+			opts.Flags.Tidy()
 		},
 	}
 	cmd.SetVersionTemplate("{{printf \"%s\" .Version}}\n")
@@ -174,10 +179,39 @@ func (co *CommandOptions) Execute() error {
 	}
 	klog.V(4).Infof("fetched %d VPA(s)", len(vpas))
 
-	table := co.bindRecommendationsAndRequests(vpas)
-	table.SortBy(co.Flags.SortOrder, co.Flags.SortColumns...)
+	var tables []table
 
-	return table.Print(co.Out, co.Flags)
+	if co.Flags.split {
+		// Sort the result list by namespace, and create
+		// a table of VPA objects for each.
+		sort.SliceStable(vpas, func(i, j int) bool {
+			return vpas[i].Namespace < vpas[j].Namespace
+		})
+		j := 0
+		for i := 0; i < len(vpas); i++ {
+			if i != 0 && vpas[i].Namespace != vpas[i-1].Namespace || i == len(vpas)-1 {
+				table := co.bindRecommendationsAndRequests(vpas[j:i])
+				tables = append(tables, table)
+				j = i
+			}
+		}
+	} else {
+		table := co.bindRecommendationsAndRequests(vpas)
+		tables = append(tables, table)
+	}
+	for i := range tables {
+		tables[i].SortBy(co.Flags.SortOrder, co.Flags.SortColumns...)
+		if err := tables[i].Print(co.Out, co.Flags); err != nil {
+			return err
+		}
+		if i != len(tables)-1 {
+			_, err := os.Stdout.WriteString("\n")
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // bindRecommendationsAndRequests returns a table that bind the

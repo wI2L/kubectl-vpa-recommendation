@@ -62,13 +62,13 @@ Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s
 - `--namespace`, `-n`: If present, the namespace scope for the request
 - `--no-colors`: Do not use colors to highlight increase/decrease percentage values
 - `--no-headers`: Do not print table headers
-- `--output`, `-o`: Output format. Empty string or `wide`
+- `--output`, `-o`: Output format. One of: `wide` | `split` | `split-wide`
 - `--recommendation-type`: The type of recommendation to use in comparisons. One of: `lower-bound`, `target`, `uncapped-target`, `upper-bound`. Default to `target`
     - see [`RecommendedContainerResources`](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L245) for more details about the fields represented by each possible value
 - `--show-containers`, `-c`: Display containers recommendations for each `VerticalPodAutoscaler` resource
 - `--show-kind`, `-k`: Show the resource type for the requested object(s) and their target
 - `--show-namespace`: Show resource namespace as the first column
-- `--sort-columns`: Comma-separated list of column names for sorting the table. Any of: `cpu-diff`, `cpu-rec`, `cpu-req`, `mem-diff`, `mem-rec`, `mem-request`, `name`, `namespace`, `target`. Default to `namespace,name`
+- `--sort-columns`: Comma-separated list of column names for sorting the table. Any of: `cpu-diff` | `cpu-rec` | `cpu-req` | `mem-diff` | `mem-rec` | `mem-req` | `name` | `namespace` | `target`. Default to `namespace,name`
 - `--sort-order`: The sort order of the table columns. Either `asc` or `desc`. Default to `asc`
 
 To view the full list of available options, use the following command:
