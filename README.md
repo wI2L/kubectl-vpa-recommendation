@@ -64,7 +64,7 @@ Apart from the flags defined by the [`genericclioptions`](https://pkg.go.dev/k8s
 - `--no-headers`: Do not print table headers
 - `--output`, `-o`: Output format. One of: `wide` | `split` | `split-wide`
 - `--recommendation-type`: The type of recommendation to use in comparisons. One of: `lower-bound`, `target`, `uncapped-target`, `upper-bound`. Default to `target`
-    - see [`RecommendedContainerResources`](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L245) for more details about the fields represented by each possible value
+    - see [`RecommendedContainerResources`](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1/types.go#L245) for more details about the fields represented by each value
 - `--show-containers`, `-c`: Display containers recommendations for each `VerticalPodAutoscaler` resource
 - `--show-kind`, `-k`: Show the resource type for the requested object(s) and their target
 - `--show-namespace`: Show resource namespace as the first column
