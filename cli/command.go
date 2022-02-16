@@ -215,7 +215,7 @@ func (co *CommandOptions) Execute() error {
 }
 
 // bindRecommendationsAndRequests returns a table that bind the
-// recommendations of the VPA in the list to the actual resource
+// recommendation of the VPA(s) in the list to the actual resource
 // requests of their target controller's pods.
 func (co *CommandOptions) bindRecommendationsAndRequests(list []*vpav1.VerticalPodAutoscaler) table {
 	var table table

@@ -4,7 +4,7 @@ coverage:
     # Prevent small variations of coverage from failing CI.
     project:
       default:
-        threshold: 1%
+        threshold: 10% # TODO: reduce once we have a better coverage
     patch: off
 ignore:
   - internal/version

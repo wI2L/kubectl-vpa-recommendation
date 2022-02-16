@@ -3,6 +3,7 @@ module github.com/wI2L/kubectl-vpa-recommendation
 go 1.17
 
 require (
+	github.com/dustin/go-humanize v1.0.0
 	github.com/muesli/termenv v0.9.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.3.0

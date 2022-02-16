@@ -18,6 +18,7 @@ const (
 	flagShowKindShorthand       = "k"
 	flagShowContainers          = "show-containers"
 	flagShowContainersShorthand = "c"
+	flagShowStats               = "show-stats"
 	flagNoColors                = "no-colors"
 	flagNoHeaders               = "no-headers"
 	flagSortOrder               = "sort-order"
@@ -48,6 +49,7 @@ type Flags struct {
 	ShowNamespace      bool
 	ShowKind           bool
 	ShowContainers     bool
+	ShowStats          bool
 	NoColors           bool
 	NoHeaders          bool
 	SortOrder          sortOrder
@@ -108,6 +110,9 @@ func (f *Flags) AddFlags(flags *pflag.FlagSet) {
 
 	flags.Var(&f.RecommendationType, flagRecommendationType,
 		fmt.Sprintf("The type of recommendation to use in comparisons. One of: %s", strings.Join(recommendationTypeFlagValues(), ", ")))
+
+	flags.BoolVar(&f.ShowStats, flagShowStats, f.ShowStats,
+		"Show statistics about all VPA recommendations and requests")
 }
 
 // Tidy post-processes the flags.

@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"os"
 	"sort"
 	"strings"
 
+	"github.com/dustin/go-humanize"
 	"github.com/muesli/termenv"
 	"github.com/olekukonko/tablewriter"
+	"gopkg.in/inf.v0"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -141,8 +144,7 @@ const (
 
 // Print writes the table to w.
 func (t table) Print(w io.Writer, flags *Flags) error {
-	tw := tablewriter.NewWriter(w)
-	setKubectlTableFormat(tw)
+	tw := newKubectlTableWriter(w)
 
 	if !flags.NoHeaders {
 		var headers []string
@@ -168,23 +170,140 @@ func (t table) Print(w io.Writer, flags *Flags) error {
 	}
 	tw.Render()
 
+	if flags.ShowStats {
+		_, err := os.Stdout.WriteString("\n")
+		if err != nil {
+			return err
+		}
+		return t.printStats(w)
+	}
 	return nil
 }
 
-// setKubectlTableFormat configures the given writer
-// to print according to the Kubectl output format.
-func setKubectlTableFormat(t *tablewriter.Table) {
-	t.SetAutoWrapText(false)
-	t.SetAutoFormatHeaders(true)
-	t.SetNoWhiteSpace(true)
-	t.SetHeaderLine(false)
-	t.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	t.SetAlignment(tablewriter.ALIGN_LEFT)
-	t.SetCenterSeparator("")
-	t.SetColumnSeparator("")
-	t.SetRowSeparator("")
-	t.SetTablePadding("   ")
-	t.SetBorder(false)
+type tableStatFn func(column func(i int) *resource.Quantity) *resource.Quantity
+
+func (t table) printStats(w io.Writer) error {
+	tw := newKubectlTableWriter(w)
+
+	statFuncs := []tableStatFn{
+		t.sumQuantities,
+		t.meanQuantities,
+		t.medianQuantities,
+	}
+	rows := []struct {
+		name    string
+		getter  func(i int) *resource.Quantity
+		asBytes bool
+	}{
+		{"CPU Recommendations (# cores)", func(i int) *resource.Quantity { return t[i].Recommendations.CPU }, false},
+		{"CPU Requests (# cores)", func(i int) *resource.Quantity { return t[i].Requests.CPU }, false},
+		{"MEM Recommendations (IEC/SI)", func(i int) *resource.Quantity { return t[i].Recommendations.Memory }, true},
+		{"MEM Requests (IEC/SI)", func(i int) *resource.Quantity { return t[i].Requests.Memory }, true},
+	}
+	for _, row := range rows {
+		values := make([]string, 0, len(statFuncs))
+		for _, fn := range statFuncs {
+			q := fn(row.getter)
+
+			var str string
+			if q == nil {
+				str = tableUnsetCell
+			} else {
+				if row.asBytes {
+					tmp := inf.Dec{}
+					tmp.Round(q.AsDec(), 0, inf.RoundUp)
+					big := tmp.UnscaledBig()
+					str = humanize.BigIBytes(big) + "/" + humanize.BigBytes(big)
+					str = strings.ReplaceAll(str, " ", "")
+				} else {
+					str = q.AsDec().String()
+				}
+			}
+			values = append(values, str)
+		}
+		tw.Append(append([]string{row.name}, values...))
+	}
+	tw.SetHeader([]string{"Description", "Total", "Mean", "Median"})
+	tw.Render()
+
+	return nil
+}
+
+func (t table) sumQuantities(column func(i int) *resource.Quantity) *resource.Quantity {
+	var sum resource.Quantity
+	for i := range t {
+		v := column(i)
+		if v != nil {
+			sum.Add(*v)
+		}
+	}
+	return &sum
+}
+
+func (t table) meanQuantities(column func(i int) *resource.Quantity) *resource.Quantity {
+	sum := t.sumQuantities(column)
+	dec := sum.AsDec()
+	tmp := inf.Dec{}
+	tmp.QuoRound(dec, inf.NewDec(int64(len(t)), 0), dec.Scale(), inf.RoundDown)
+
+	return resource.NewDecimalQuantity(tmp, resource.DecimalSI)
+}
+
+func (t table) medianQuantities(column func(i int) *resource.Quantity) *resource.Quantity {
+	var values []*resource.Quantity
+
+	// Collect all values and sort them.
+	for i := range t {
+		v := column(i)
+		if v != nil {
+			values = append(values, v)
+		}
+	}
+	sort.Slice(values, func(i, j int) bool {
+		b := compareQuantities(values[i], values[j])
+		switch b {
+		case -1:
+			return true
+		default:
+			return false
+		}
+	})
+	// No math is needed if there are no numbers.
+	// For even numbers we add the two middle values
+	// and divide by two.
+	// For odd numbers we just use the middle value.
+	l := len(values)
+	if l == 0 {
+		return nil
+	} else if l%2 == 0 {
+		q := values[l/2-1]
+		q.Add(*(values[l/2+1]))
+		tmp := inf.Dec{}
+		tmp.QuoRound(q.AsDec(), inf.NewDec(2, 0), 0, inf.RoundDown)
+
+		return resource.NewDecimalQuantity(tmp, resource.DecimalSI)
+	}
+	return values[l/2]
+}
+
+// newKubectlTableWriter returns a new table writer that writes
+// to w and print according to the Kubectl output format.
+func newKubectlTableWriter(w io.Writer) *tablewriter.Table {
+	tw := tablewriter.NewWriter(w)
+
+	tw.SetAutoWrapText(false)
+	tw.SetAutoFormatHeaders(true)
+	tw.SetNoWhiteSpace(true)
+	tw.SetHeaderLine(false)
+	tw.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	tw.SetAlignment(tablewriter.ALIGN_LEFT)
+	tw.SetCenterSeparator("")
+	tw.SetColumnSeparator("")
+	tw.SetRowSeparator("")
+	tw.SetTablePadding("   ")
+	tw.SetBorder(false)
+
+	return tw
 }
 
 // multiTableSorter implements the sort.Sort interface
