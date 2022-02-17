@@ -277,9 +277,9 @@ func (t table) medianQuantities(column func(i int) *resource.Quantity) *resource
 		return nil
 	} else if l%2 == 0 {
 		q := values[l/2-1]
-		q.Add(*(values[l/2+1]))
+		q.Add(*(values[l/2]))
 		tmp := inf.Dec{}
-		tmp.QuoRound(q.AsDec(), inf.NewDec(2, 0), 0, inf.RoundDown)
+		tmp.QuoRound(q.AsDec(), inf.NewDec(2, 0), 3, inf.RoundDown)
 
 		return resource.NewDecimalQuantity(tmp, resource.DecimalSI)
 	}
