@@ -272,6 +272,7 @@ func newTableRow(v *vpav1.VerticalPodAutoscaler, tc *vpa.TargetController, name 
 		Namespace:        v.Namespace,
 		GVK:              v.GroupVersionKind(),
 		Mode:             updateModeFromSpec(v.Spec.UpdatePolicy),
+		Target:           tc,
 		TargetName:       tc.Name,
 		TargetGVK:        tc.GroupVersionKind,
 		Requests:         rqs,

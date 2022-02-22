@@ -178,6 +178,30 @@ func resolveLabelSelector(obj *unstructuredv1.Unstructured) (*metav1.LabelSelect
 	return selector, nil
 }
 
+// ReplicasCount returns the number of replicas of the controller.
+// It is used to scale the resource/recommendation statistics to get
+// real usage values that reflect the number of pods schedules for
+// each target controller.
+func (tc *TargetController) ReplicasCount() (int64, error) {
+	fields := []string{
+		"spec",
+		"replicas",
+	}
+	var err error
+	fields, err = genericControllerSpecPath(tc.controllerObj.GetKind(), fields)
+	if err != nil {
+		return 0, err
+	}
+	replicas, ok, err := unstructuredv1.NestedInt64(tc.controllerObj.Object, fields...)
+	if err != nil {
+		return 0, fmt.Errorf("nested field has invalid type: %w", err)
+	}
+	if !ok {
+		return 0, fmt.Errorf("nested field with path %s not found", strings.Join(fields, "."))
+	}
+	return replicas, nil
+}
+
 func genericControllerSpecPath(kind string, fields []string) ([]string, error) {
 	switch wellKnownControllerKind(kind) {
 	case ds, deploy, job, rs, rc, sts:
@@ -197,7 +221,7 @@ func genericControllerSpecPath(kind string, fields []string) ([]string, error) {
 func decodeNestedFieldInto(obj *unstructuredv1.Unstructured, fields []string, into interface{}) error {
 	nmap, ok, err := unstructuredv1.NestedMap(obj.Object, fields...)
 	if err != nil {
-		return fmt.Errorf("nested field has invalid type")
+		return fmt.Errorf("nested field has invalid type: %w", err)
 	}
 	if !ok {
 		return fmt.Errorf("nested field with path %s not found", strings.Join(fields, "."))

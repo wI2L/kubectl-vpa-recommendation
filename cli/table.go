@@ -8,13 +8,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dustin/go-humanize"
 	"github.com/muesli/termenv"
 	"github.com/olekukonko/tablewriter"
 	"gopkg.in/inf.v0"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/wI2L/kubectl-vpa-recommendation/internal/humanize"
 	"github.com/wI2L/kubectl-vpa-recommendation/vpa"
 )
 
@@ -54,8 +54,10 @@ type tableRow struct {
 	Namespace        string
 	GVK              schema.GroupVersionKind
 	Mode             string
+	Target           *vpa.TargetController
 	TargetName       string
 	TargetGVK        schema.GroupVersionKind
+	TargetReplicas   int32
 	Requests         vpa.ResourceQuantities
 	Recommendations  vpa.ResourceQuantities
 	CPUDifference    *float64
@@ -88,18 +90,30 @@ func (tr tableRow) toTableData(flags *Flags, isChild bool) []string {
 
 	if flags.wide {
 		rowData = append(rowData,
-			formatQuantity(tr.Requests.CPU),
-			formatQuantity(tr.Recommendations.CPU),
+			formatQuantity(tr.Requests.CPU), formatQuantity(tr.Recommendations.CPU),
 		)
 	}
 	rowData = append(rowData, formatPercentage(tr.CPUDifference, flags.NoColors))
 	if flags.wide {
+		var str string
+		d := inf.Dec{}
+		d.Round(tr.Recommendations.Memory.AsDec(), 0, inf.RoundUp)
+		b := d.UnscaledBig()
+		switch tr.Requests.Memory.Format {
+		case resource.DecimalSI:
+			str = humanize.BigBytes(b, 2)
+		case resource.BinarySI:
+			str = humanize.BigIBytes(b, 2)
+		default:
+			str = tr.Recommendations.Memory.String()
+		}
 		rowData = append(rowData,
 			formatQuantity(tr.Requests.Memory),
-			formatQuantity(tr.Recommendations.Memory),
+			str,
 		)
 	}
 	rowData = append(rowData, formatPercentage(tr.MemoryDifference, flags.NoColors))
+
 	return rowData
 }
 
@@ -191,35 +205,48 @@ func (t table) printStats(w io.Writer) error {
 		t.medianQuantities,
 	}
 	rows := []struct {
-		name    string
-		getter  func(i int) *resource.Quantity
-		asBytes bool
+		name           string
+		quantityGetter func(i int) *resource.Quantity
+		asBytes        bool
 	}{
-		{"CPU Recommendations (# cores)", func(i int) *resource.Quantity { return t[i].Recommendations.CPU }, false},
 		{"CPU Requests (# cores)", func(i int) *resource.Quantity { return t[i].Requests.CPU }, false},
-		{"MEM Recommendations (IEC/SI)", func(i int) *resource.Quantity { return t[i].Recommendations.Memory }, true},
+		{"CPU Recommendations (# cores)", func(i int) *resource.Quantity { return t[i].Recommendations.CPU }, false},
 		{"MEM Requests (IEC/SI)", func(i int) *resource.Quantity { return t[i].Requests.Memory }, true},
+		{"MEM Recommendations (IEC/SI)", func(i int) *resource.Quantity { return t[i].Recommendations.Memory }, true},
 	}
 	for _, row := range rows {
 		values := make([]string, 0, len(statFuncs))
-		for _, fn := range statFuncs {
-			q := fn(row.getter)
 
-			var str string
-			if q == nil {
-				str = tableUnsetCell
-			} else {
-				if row.asBytes {
-					tmp := inf.Dec{}
-					tmp.Round(q.AsDec(), 0, inf.RoundUp)
-					big := tmp.UnscaledBig()
-					str = humanize.BigIBytes(big) + "/" + humanize.BigBytes(big)
-					str = strings.ReplaceAll(str, " ", "")
+		for _, fn := range statFuncs {
+			scaledQuantity := func(i int) *resource.Quantity {
+				q := row.quantityGetter(i)
+
+				// Scale the quantity according to the number
+				// of replicas declared in the controller's spec.
+				var replicas int64
+				n, err := t[i].Target.ReplicasCount()
+				if err != nil {
+					replicas = 1
 				} else {
-					str = q.AsDec().String()
+					replicas = n
+				}
+				return multiplyQuantity(q, replicas)
+			}
+			q := fn(scaledQuantity)
+
+			s := tableUnsetCell
+			if q != nil {
+				if row.asBytes {
+					d := inf.Dec{}
+					d.Round(q.AsDec(), 0, inf.RoundUp)
+					b := d.UnscaledBig()
+					s = humanize.BigIBytes(b, 2) + "/" + humanize.BigBytes(b, 2)
+					s = strings.ReplaceAll(s, " ", "")
+				} else {
+					s = q.AsDec().Round(q.AsDec(), 2, inf.RoundCeil).String()
 				}
 			}
-			values = append(values, str)
+			values = append(values, s)
 		}
 		tw.Append(append([]string{row.name}, values...))
 	}
@@ -227,6 +254,23 @@ func (t table) printStats(w io.Writer) error {
 	tw.Render()
 
 	return nil
+}
+
+func multiplyQuantity(q *resource.Quantity, n int64) *resource.Quantity {
+	if q == nil || n == 0 {
+		return nil
+	}
+	if n == 1 {
+		return q
+	}
+	// The resource.Quantity type does not define a
+	// multiplication method, so instead we add the
+	// same amount n-1 times.
+	ret := q.DeepCopy()
+	for i := 0; int64(i) < n-1; i++ {
+		ret.Add(*q)
+	}
+	return &ret
 }
 
 func (t table) sumQuantities(column func(i int) *resource.Quantity) *resource.Quantity {
@@ -279,7 +323,7 @@ func (t table) medianQuantities(column func(i int) *resource.Quantity) *resource
 		q := values[l/2-1]
 		q.Add(*(values[l/2]))
 		tmp := inf.Dec{}
-		tmp.QuoRound(q.AsDec(), inf.NewDec(2, 0), 3, inf.RoundDown)
+		tmp.QuoRound(q.AsDec(), inf.NewDec(2, 0), 2, inf.RoundUp)
 
 		return resource.NewDecimalQuantity(tmp, resource.DecimalSI)
 	}
