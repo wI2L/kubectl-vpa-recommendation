@@ -45,7 +45,9 @@ It creates a single binary file for the host machine platform/architecture in th
 
 ### How to interpret the output?
 
-The columns `% CPU DIFF` and `% MEMORY DIFF` represents the percentage of increase/decrease for the request in terms of the recommendation. For example, if the request is 4 CPU (4000m), and the recommendation is only 1 CPU (1000m), the difference is +300%. As a rule of thumb, you can think of positive values as "overcommitment"  and negative values as "under commitment".
+The columns `% CPU DIFF` and `% MEMORY DIFF` represents the percentage of increase/decrease for the request in terms of the recommendation.
+
+For example, if a request value is set to 4 CPU (4000m), and the recommendation is only 1 CPU (1000m), the difference printed is `+300%`. As a rule of thumb, you can think of positive values as "overcommitment"  and negative values as "under commitment".
 
 ### Demo
 

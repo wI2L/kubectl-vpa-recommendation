@@ -3,21 +3,20 @@ module github.com/wI2L/kubectl-vpa-recommendation
 go 1.17
 
 require (
-	github.com/dustin/go-humanize v1.0.0
-	github.com/muesli/termenv v0.9.0
+	github.com/muesli/termenv v0.11.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	gopkg.in/inf.v0 v0.9.1
-	k8s.io/api v0.23.3
-	k8s.io/apimachinery v0.23.3
-	k8s.io/autoscaler/vertical-pod-autoscaler v0.9.2
-	k8s.io/cli-runtime v0.23.1
-	k8s.io/client-go v0.23.3
-	k8s.io/component-base v0.23.1
-	k8s.io/klog/v2 v2.30.0
-	k8s.io/kubectl v0.23.1
-	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704
+	k8s.io/api v0.23.4
+	k8s.io/apimachinery v0.23.4
+	k8s.io/autoscaler/vertical-pod-autoscaler v0.10.0
+	k8s.io/cli-runtime v0.23.4
+	k8s.io/client-go v0.23.4
+	k8s.io/component-base v0.23.4
+	k8s.io/klog/v2 v2.40.1
+	k8s.io/kubectl v0.23.4
+	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 )
 
 require (
@@ -39,7 +38,7 @@ require (
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/go-logr/logr v1.2.0 // indirect
+	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
