@@ -74,8 +74,8 @@ func NewCmd(streams genericclioptions.IOStreams, name string) *cobra.Command {
 			comps := get.CompGetResource(f, cmd, vpaPlural, tc)
 			return comps, cobra.ShellCompDirectiveNoFileComp
 		},
-		PersistentPreRun: func(_ *cobra.Command, _ []string) {
-			opts.Flags.Tidy()
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			return opts.Flags.Tidy()
 		},
 	}
 	cmd.SetVersionTemplate("{{printf \"%s\" .Version}}\n")

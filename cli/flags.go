@@ -29,6 +29,8 @@ const (
 	flagOutput                  = "output"
 	flagOutputShorthand         = "o"
 	flagRecommendationType      = "recommendation-type"
+	flagWarningThreshold        = "warning-threshold"
+	flagCriticalThreshold       = "critical-threshold"
 )
 
 const (
@@ -58,6 +60,8 @@ type Flags struct {
 	FieldSelector      string
 	Output             string
 	RecommendationType vpa.RecommendationType
+	WarningThreshold   float64
+	CriticalThreshold  float64
 
 	wide  bool
 	split bool
@@ -69,6 +73,8 @@ func DefaultFlags() *Flags {
 		SortOrder:          defaultSortOrder,
 		SortColumns:        defaultSortColumns,
 		RecommendationType: defaultRecommendationType,
+		WarningThreshold:   20,
+		CriticalThreshold:  50,
 	}
 	return f
 }
@@ -113,10 +119,19 @@ func (f *Flags) AddFlags(flags *pflag.FlagSet) {
 
 	flags.BoolVar(&f.ShowStats, flagShowStats, f.ShowStats,
 		"Show statistics about all VPA recommendations and requests")
+
+	flags.Float64Var(&f.WarningThreshold, flagWarningThreshold, f.WarningThreshold,
+		"Warning threshold of percentage difference for colored output")
+
+	flags.Float64Var(&f.CriticalThreshold, flagCriticalThreshold, f.CriticalThreshold,
+		"Critical threshold of percentage difference for colored output")
 }
 
 // Tidy post-processes the flags.
-func (f *Flags) Tidy() {
+func (f *Flags) Tidy() error {
+	if f.CriticalThreshold <= f.WarningThreshold {
+		return fmt.Errorf("critical threshold must be strictly greater than warning")
+	}
 	switch f.Output {
 	case wideOutput:
 		f.wide = true
@@ -126,6 +141,7 @@ func (f *Flags) Tidy() {
 		f.wide = true
 		f.split = true
 	}
+	return nil
 }
 
 func sortColumnsFlagValues() []string {

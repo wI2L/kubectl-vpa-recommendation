@@ -93,7 +93,7 @@ func (tr tableRow) toTableData(flags *Flags, isChild bool) []string {
 			formatQuantity(tr.Requests.CPU), formatQuantity(tr.Recommendations.CPU),
 		)
 	}
-	rowData = append(rowData, formatPercentage(tr.CPUDifference, flags.NoColors))
+	rowData = append(rowData, formatPercentage(tr.CPUDifference, flags))
 	if flags.wide {
 		var str string
 		d := inf.Dec{}
@@ -112,7 +112,7 @@ func (tr tableRow) toTableData(flags *Flags, isChild bool) []string {
 			str,
 		)
 	}
-	rowData = append(rowData, formatPercentage(tr.MemoryDifference, flags.NoColors))
+	rowData = append(rowData, formatPercentage(tr.MemoryDifference, flags))
 
 	return rowData
 }
@@ -392,22 +392,23 @@ var columnLessFunc = map[string]lessFunc{
 	},
 }
 
-func formatPercentage(f *float64, noColors bool) string {
+func formatPercentage(f *float64, flags *Flags) string {
 	if f == nil {
 		return tableUnsetCell
 	}
 	n := fmt.Sprintf("%+.2f", *f)
 
-	if termenv.EnvNoColor() || noColors {
+	if termenv.EnvNoColor() || flags.NoColors {
 		return n
 	}
 	p := termenv.ColorProfile()
 	s := termenv.String(n)
 
+	warn, crit := flags.WarningThreshold, flags.CriticalThreshold
 	switch {
-	case *f >= -10 && *f <= 20:
+	case *f > -warn && *f < warn:
 		s = s.Foreground(p.Color("#A8CC8C"))
-	case (*f > 20 && *f < 50) || (*f < -10 && *f > -50):
+	case (*f >= warn && *f < crit) || (*f <= -warn && *f > -crit):
 		s = s.Foreground(p.Color("#DBAB79"))
 	default:
 		s = s.Foreground(p.Color("#E88388"))
