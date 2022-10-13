@@ -94,22 +94,30 @@ func (tr tableRow) toTableData(flags *Flags, isChild bool) []string {
 		)
 	}
 	rowData = append(rowData, formatPercentage(tr.CPUDifference, flags))
+
 	if flags.wide {
-		var str string
-		d := inf.Dec{}
-		d.Round(tr.Recommendations.Memory.AsDec(), 0, inf.RoundUp)
-		b := d.UnscaledBig()
-		switch tr.Requests.Memory.Format {
-		case resource.DecimalSI:
-			str = humanize.BigBytes(b, 2)
-		case resource.BinarySI:
-			str = humanize.BigIBytes(b, 2)
-		default:
-			str = tr.Recommendations.Memory.String()
+		recoStr := tableUnsetCell
+		if tr.Recommendations.Memory != nil {
+			d := inf.Dec{}
+			d.Round(tr.Recommendations.Memory.AsDec(), 0, inf.RoundUp)
+			b := d.UnscaledBig()
+
+			if tr.Requests.Memory != nil {
+				switch tr.Requests.Memory.Format {
+				case resource.DecimalSI:
+					recoStr = humanize.BigBytes(b, 2)
+				case resource.BinarySI:
+					recoStr = humanize.BigIBytes(b, 2)
+				default:
+					recoStr = tr.Recommendations.Memory.String()
+				}
+			} else {
+				recoStr = tr.Recommendations.Memory.String()
+			}
 		}
 		rowData = append(rowData,
 			formatQuantity(tr.Requests.Memory),
-			str,
+			recoStr,
 		)
 	}
 	rowData = append(rowData, formatPercentage(tr.MemoryDifference, flags))
