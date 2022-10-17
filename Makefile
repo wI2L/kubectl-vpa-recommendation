@@ -1,8 +1,8 @@
 DISTDIR = dist
 
 # Utility versions.
-GORELEASER_VERSION    = "v1.3.1"
-GOLANGCI_LINT_VERSION = "v1.43.0"
+GORELEASER_VERSION    = "v1.11.5"
+GOLANGCI_LINT_VERSION = "v1.50.0"
 
 # Build variables.
 GIT_TREE_STATE=$(if $(shell git status --porcelain),dirty,clean)
