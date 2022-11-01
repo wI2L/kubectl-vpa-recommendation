@@ -29,6 +29,7 @@ const (
 	rs     wellKnownControllerKind = "ReplicaSet"
 	rc     wellKnownControllerKind = "ReplicationController"
 	sts    wellKnownControllerKind = "StatefulSet"
+	ro     wellKnownControllerKind = "Rollout"
 )
 
 // TargetController abstract a scalable controller
@@ -53,7 +54,7 @@ func NewTargetController(c client.Interface, ref *autoscalingv1.CrossVersionObje
 	kind := obj.GetKind()
 
 	switch wellKnownControllerKind(kind) {
-	case cj, ds, deploy, job, rs, rc, sts:
+	case cj, ds, deploy, job, rs, rc, sts, ro:
 	case node:
 		// Some pods specify nodes as their owners,
 		// but they aren't valid controllers that
@@ -204,7 +205,7 @@ func (tc *TargetController) ReplicasCount() (int64, error) {
 
 func genericControllerSpecPath(kind string, fields []string) ([]string, error) {
 	switch wellKnownControllerKind(kind) {
-	case ds, deploy, job, rs, rc, sts:
+	case ds, deploy, job, rs, rc, sts, ro:
 		// Same default fields.
 	case cj:
 		prefix := []string{
