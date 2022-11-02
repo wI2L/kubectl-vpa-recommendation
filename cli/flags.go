@@ -112,7 +112,7 @@ func (f *Flags) AddFlags(flags *pflag.FlagSet) {
 		"Selector (field query) to filter on, supports '=', '==', and '!=' (e.g. --field-selector key1=value1,key2=value2)")
 
 	flags.StringVarP(&f.Output, flagOutput, flagOutputShorthand, f.Output,
-		"Output format. One of 'wide', 'slit', 'split-wide'")
+		"Output format. One of 'wide', 'split', 'split-wide'")
 
 	flags.Var(&f.RecommendationType, flagRecommendationType,
 		fmt.Sprintf("The type of recommendation to use in comparisons. One of: %s", strings.Join(recommendationTypeFlagValues(), ", ")))
