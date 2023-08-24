@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -53,35 +54,60 @@ func NewTargetController(c client.Interface, ref *autoscalingv1.CrossVersionObje
 	}
 	kind := obj.GetKind()
 
+	isWellKnown := false
+
 	switch wellKnownControllerKind(kind) {
 	case cj, ds, deploy, job, rs, rc, sts, ro:
+		isWellKnown = true
 	case node:
 		// Some pods specify nodes as their owners,
 		// but they aren't valid controllers that
 		// the VPA supports, so we just skip them.
 		return nil, fmt.Errorf("node is not a valid target")
 	default:
-		return nil, fmt.Errorf("unsupported target kind: %s", kind)
+		isWellKnown = false
 	}
-	tc := &TargetController{
-		Name:             obj.GetName(),
-		Namespace:        obj.GetNamespace(),
-		GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
-		controllerKind:   wellKnownControllerKind(kind),
-		controllerObj:    obj,
+	var tc *TargetController
+	var selector labels.Selector
+
+	if isWellKnown {
+		tc = &TargetController{
+			Name:             obj.GetName(),
+			Namespace:        obj.GetNamespace(),
+			GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
+			controllerKind:   wellKnownControllerKind(kind),
+			controllerObj:    obj,
+		}
+		tc.podSpec, err = resolvePodSpec(obj)
+		if err != nil {
+			return nil, err
+		}
+
+		labelSelector, err := resolveLabelSelector(obj)
+		if err != nil {
+			return nil, err
+		}
+
+		selector, err = metav1.LabelSelectorAsSelector(labelSelector)
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+		tc = &TargetController{
+			Name:             obj.GetName(),
+			Namespace:        obj.GetNamespace(),
+			GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
+			controllerKind:   wellKnownControllerKind(kind),
+			controllerObj:    obj,
+		}
+		selector, err = c.GetLabelSelectorFromResource(tc.GroupVersionKind.GroupKind(), tc.Namespace, tc.Name)
+
+		if err != nil {
+			return nil, err
+		}
 	}
-	tc.podSpec, err = resolvePodSpec(obj)
-	if err != nil {
-		return nil, err
-	}
-	labelSelector, err := resolveLabelSelector(obj)
-	if err != nil {
-		return nil, err
-	}
-	selector, err := metav1.LabelSelectorAsSelector(labelSelector)
-	if err != nil {
-		return nil, err
-	}
+
 	// The PodSpec template defined by a controller might not represent
 	// the final spec of the pods. For example, a LimitRanger controller
 	// could change the spec of pods to set default resource requests and
@@ -104,7 +130,7 @@ func NewTargetController(c client.Interface, ref *autoscalingv1.CrossVersionObje
 	}
 	if len(pods) != 0 {
 		p := pods[0]
-		if !reflect.DeepEqual(p.Spec.Containers, tc.podSpec.Containers) {
+		if tc.podSpec == nil || !reflect.DeepEqual(p.Spec.Containers, tc.podSpec.Containers) {
 			tc.podSpec = &p.Spec
 		}
 	}
