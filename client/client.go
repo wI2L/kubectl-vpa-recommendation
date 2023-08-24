@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
@@ -19,6 +20,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/scale"
 	"k8s.io/client-go/tools/pager"
 )
 
@@ -44,6 +46,7 @@ type Interface interface {
 	ListVPAResources(context.Context, ListOptions) ([]*vpav1.VerticalPodAutoscaler, error)
 	GetVPATarget(context.Context, *autoscalingv1.CrossVersionObjectReference, string) (*unstructuredv1.Unstructured, error)
 	ListDependentPods(ctx context.Context, targetMeta metav1.ObjectMeta, labelSelector string) ([]*corev1.Pod, error)
+	GetLabelSelectorFromResource(groupKind schema.GroupKind, namespace, name string) (labels.Selector, error)
 }
 
 var _ Interface = (*client)(nil)
@@ -56,6 +59,7 @@ type client struct {
 	discoveryClient discovery.DiscoveryInterface
 	coreClient      *corev1client.CoreV1Client
 	mapper          meta.RESTMapper
+	scaleNamespacer scale.ScalesGetter
 
 	// lock during lazy init of the client
 	sync.Mutex
@@ -220,6 +224,33 @@ func (c *client) ListDependentPods(ctx context.Context, targetMeta metav1.Object
 		}
 	}
 	return pods, nil
+}
+
+func (c *client) GetLabelSelectorFromResource(groupKind schema.GroupKind, namespace, name string) (labels.Selector, error) {
+	mappings, err := c.mapper.RESTMappings(groupKind)
+	if err != nil {
+		return nil, err
+	}
+
+	var lastError error
+	for _, mapping := range mappings {
+		groupResource := mapping.Resource.GroupResource()
+		scale, err := c.scaleNamespacer.Scales(namespace).Get(context.TODO(), groupResource, name, metav1.GetOptions{})
+		if err == nil {
+			if scale.Status.Selector == "" {
+				return nil, fmt.Errorf("Resource %s/%s has an empty selector for scale sub-resource", namespace, name)
+			}
+			selector, err := labels.Parse(scale.Status.Selector)
+			if err != nil {
+				return nil, err
+			}
+			return selector, nil
+		}
+		lastError = err
+	}
+
+	// nothing found, apparently the resource does not support scale (or we lack RBAC)
+	return nil, lastError
 }
 
 // referenceMatchController returns whether the given

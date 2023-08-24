@@ -7,7 +7,9 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/dynamic"
+	kube_client "k8s.io/client-go/kubernetes"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/scale"
 	"k8s.io/kubectl/pkg/cmd/get"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/util"
@@ -107,12 +109,19 @@ func (f *Flags) NewClient() (Interface, error) {
 	if err != nil {
 		return nil, err
 	}
+	r := scale.NewDiscoveryScaleKindResolver(dis)
+
+	kubeClient := kube_client.NewForConfigOrDie(config)
+	restClient := kubeClient.CoreV1().RESTClient()
+	scaleNamespacer := scale.New(restClient, m, dynamic.LegacyAPIPathResolverFunc, r)
+
 	c := &client{
 		flags:           f,
 		dynamicClient:   dyn,
 		discoveryClient: dis,
 		coreClient:      pc,
 		mapper:          m,
+		scaleNamespacer: scaleNamespacer,
 	}
 	return c, nil
 }
